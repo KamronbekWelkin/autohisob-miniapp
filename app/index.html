@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>AutoHisob</title>
+    <style>
+        body {
+            font-family: system-ui, Arial;
+            padding: 14px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin: 6px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>AutoHisob Mini App</h3>
+
+    <div class="card">
+        <button onclick="showSale()">💰 Savdo</button>
+        <button onclick="showExpense()">🧾 Chiqim</button>
+        <button onclick="showPurchase()">➕ Kirim</button>
+        <button onclick="loadReport()">📊 Hisobot</button>
+    </div>
+
+    <div id="form" class="card"></div>
+    <div class="card">
+        <pre id="out">Tayyor ✅</pre>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        async function api(path, payload) {
+            const body = { _auth: tg.initData, ...payload };
+            const res = await fetch(path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            return await res.json();
+        }
+
+        function showSale() {
+            document.getElementById("form").innerHTML = `
+      <b>💰 Savdo</b>
+      <p>Naqd (so'm)</p>
+      <input id="cash" type="number" inputmode="numeric" />
+      <p>Karta (so'm)</p>
+      <input id="card" type="number" inputmode="numeric" />
+      <button id="ok">Saqlash</button>
+    `;
+            document.getElementById("ok").onclick = async () => {
+                const cash = Number(document.getElementById("cash").value || 0);
+                const card = Number(document.getElementById("card").value || 0);
+                const r = await api("/api/sale", { cash, card });
+                document.getElementById("out").textContent = JSON.stringify(r, null, 2);
+            };
+        }
+
+        function showExpense() {
+            document.getElementById("form").innerHTML = `
+      <b>🧾 Chiqim</b>
+      <p>Summa (so'm)</p>
+      <input id="amount" type="number" inputmode="numeric" />
+      <p>Izoh</p>
+      <input id="note" />
+      <button id="ok">Saqlash</button>
+    `;
+            document.getElementById("ok").onclick = async () => {
+                const amount = Number(document.getElementById("amount").value || 0);
+                const note = document.getElementById("note").value || "-";
+                const r = await api("/api/expense", { amount, note });
+                document.getElementById("out").textContent = JSON.stringify(r, null, 2);
+            };
+        }
+
+        function showPurchase() {
+            document.getElementById("form").innerHTML = `
+      <b>➕ Kirim</b>
+      <p>Summa (so'm)</p>
+      <input id="amount" type="number" inputmode="numeric" />
+      <p>Izoh</p>
+      <input id="note" />
+      <button id="ok">Saqlash</button>
+    `;
+            document.getElementById("ok").onclick = async () => {
+                const amount = Number(document.getElementById("amount").value || 0);
+                const note = document.getElementById("note").value || "-";
+                const r = await api("/api/purchase", { amount, note });
+                document.getElementById("out").textContent = JSON.stringify(r, null, 2);
+            };
+        }
+
+        async function loadReport() {
+            const r = await api("/api/report", {});
+            document.getElementById("out").textContent = JSON.stringify(r, null, 2);
+        }
+    </script>
+</body>
+
+</html>
